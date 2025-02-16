@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moviewind - Watch Movies Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #0f1115;
+            --secondary-bg: #1a1d24;
+            --card-border: #2a2f3a;
+            --accent-blue: #3d7bd8;
+            --accent-red: #e53e3e;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --sidebar-width: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-left: var(--sidebar-width);
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background-color: var(--secondary-bg);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+
+        .sidebar-item {
+            width: 100%;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            color: var(--text-primary);
+            background-color: rgba(61, 123, 216, 0.1);
+        }
+
+        .sidebar-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-item span {
+            font-size: 0.8rem;
+        }
+
+        header {
+            background-color: var(--secondary-bg);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            width: 300px;
+            outline: none;
+            padding-right: 0.5rem;
+        }
+
+        .movies-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .movie-card {
+            background: var(--secondary-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .movie-poster {
+            position: relative;
+            padding-top: 150%;
+        }
+
+        .movie-poster img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 1rem;
+        }
+
+        .movie-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .movie-details-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--primary-bg);
+            z-index: 2000;
+            transition: right 0.3s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .movie-details-panel.active {
+            right: 0;
+        }
+
+        .movie-details-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .movie-backdrop {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .backdrop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(15, 17, 21, 0.5), var(--primary-bg));
+        }
+
+        .close-panel {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 2001;
+            transition: transform 0.3s ease;
+        }
+
+        .close-panel:hover {
+            transform: rotate(90deg);
+        }
+
+        .movie-details-header {
+            display: flex;
+            gap: 2rem;
+            margin-top: -150px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .movie-poster-large {
+            width: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .movie-info-detailed {
+            flex: 1;
+            padding-top: 150px;
+        }
+
+        .movie-title-large {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .movie-meta-info {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .movie-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .watch-now-btn {
+            background-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .watch-now-btn:hover {
+            background-color: #2d5ca0;
+        }
+
+        .trailer-btn {
+            background-color: rgba(61, 123, 216, 0.1);
+            color: var(--text-primary);
+        }
+
+        .trailer-btn:hover {
+            background-color: rgba(61, 123, 216, 0.2);
+        }
+
+        .add-list-btn {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--accent-red);
+        }
+
+        .add-list-btn:hover {
+            background-color: rgba(229, 62, 62, 0.2);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .movie-details-header {
+                flex-direction: column;
+                margin-top: 0;
+            }
+
+            .movie-poster-large {
+                width: 200px;
+                margin: 0 auto;
+            }
+
+            .movie-info-detailed {
+                padding-top: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .movies-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .search-box input {
+                width: 200px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a class="sidebar-item">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+        </a>
+        <a class="sidebar-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a class="sidebar-item">
+            <i class="fas fa-fire"></i>
+            <span>Trending</span>
+        </a>
+        <a class="sidebar-item">
+            <i class="fas fa-bookmark"></i>
+            <span>Watchlist</span>
+        </a>
+        <a class="sidebar-item">
+            <i class="fas fa-history"></i>
+            <span>History</span>
+        </a>
+        <a class="sidebar-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </div>
+
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">moviewind</a>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" placeholder="Search movies...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="movies-container" id="moviesGrid">
+        <div class="loading">
+            <i class="fas fa-spinner"></i>
+        </div>
+    </main>
+
+    <div class="movie-details-panel" id="movieDetails">
+        <button class="close-panel" onclick="closeMovieDetails()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="movie-details-content"></div>
+    </div>
+
+    <script>
+        const TMDB_API_KEY = '239b55b594e78376195dc922e5bb00cc';
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
+
+        async function fetchMovies(category = 'popular', page = 1) {
+            try {
+                const response = await fetch(
+                    `${BASE_URL}/movie/${category}?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`
+                );
+                const data = await response.json();
+                return data.results;
+            } catch (error) {
+                console.error('Error fetching movies:', error);
+                return [];
+            }
+        }
+
+        function displayMovies(movies) {
+            const moviesGrid = document.getElementById('moviesGrid');
+            moviesGrid.innerHTML = '';
+
+            movies.forEach(movie => {
+                const card = createMovieCard(movie);
+                moviesGrid.appendChild(card);
+            });
+        }
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            
+            const releaseYear = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+            const quality = movie.vote_average >= 7 ? '1080p' : '720p';
+            
+            card.innerHTML = `
+                <div class="movie-poster">
+                    <img src="${IMAGE_BASE_URL}w500${movie.poster_path}" 
+                         alt="${movie.title}"
+                         onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+                </div>
+                <div class="movie-info">
+                    <h3 class="movie-title">${movie.title}</h3>
+                    <div class="movie-meta">
+                        <span>${releaseYear}</span>
+                        <span>${quality}</span>
+                    </div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => showMovieDetails(movie));
+            return card;
+        }
+
+        async function showMovieDetails(movie) {
+            const detailsPanel = document.getElementById('movieDetails');
+            const content = detailsPanel.querySelector('.movie-details-content');
+
+            try {
+                const response = await fetch(
+                    `${BASE_URL}/movie/${movie.id}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`
+                );
+                const movieDetails = await response.json();
+
+                content.innerHTML = `
+                    <div class="movie-backdrop" style="background-image: url('${IMAGE_BASE_URL}original${movieDetails.backdrop_path}')">
+                        <div class="backdrop-overlay"></div>
+                    </div>
+                    <div class="movie-details-header">
+                        <div class="movie-poster-large">
+                            <img src="${IMAGE_BASE_URL}w500${movie.poster_path}" alt="${movie.title}">
+                        </div>
+                        <div class="movie-info-detailed">
+                            <h1 class="movie-title-large">${movie.title}</h1>
+                            <div class="movie-meta-info">
+                                <span><i class="fas fa-star"></i> ${movie.vote_average.toFixed(1)}/10</span>
+                                <span><i class="fas fa-clock"></i> ${movieDetails.runtime} min</span>
+                                <span><i class="fas fa-calendar"></i> ${movie.release_date}</span>
+                            </div>
+                            <p class="movie-description">${movie.overview}</p>
+                            <div class="action-buttons">
+                                <button class="action-btn watch-now-btn" onclick="watchMovie('${movie.id}')">
+                                    <i class="fas fa-play"></i> Watch Now
+                                </button>
+                                <button class="action-btn trailer-btn" onclick="watchTrailer('${movieDetails.videos?.results[0]?.key}')">
+                                    <i class="fas fa-film"></i> Watch Trailer
+                                </button>
+                                <button class="action-btn add-list-btn" onclick="addToWatchlist('${movie.id}')">
+                                    <i class="fas fa-plus"></i> Add to List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                detailsPanel.classList.add('active');
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+            }
+        }
+
+        function closeMovieDetails() {
+            const detailsPanel = document.getElementById('movieDetails');
+            detailsPanel.classList.remove('active');
+        }
+
+        function watchMovie(movieId) {
+            console.log('Watching movie:', movieId);
+        }
+
+        function watchTrailer(trailerKey) {
+            if (trailerKey) {
+                window.open(`https://www.youtube.com/watch?v=${trailerKey}`, '_blank');
+            } else {
+                alert('No trailer available');
+            }
+        }
+
+        function addToWatchlist(movieId) {
+            console.log('Added to watchlist:', movieId);
+            alert('Added to watchlist!');
+        }
+
+        async function searchMovies(query) {
+            if (!query) {
+                const movies = await fetchMovies();
+                displayMovies(movies);
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${query}&page=1`
+                );
+                const data = await response.json();
+                displayMovies(data.results);
+            } catch (error) {
+                console.error('Error searching movies:', error);
+            }
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchInput = document.querySelector('.search-box input');
+            let timeoutId;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    searchMovies(e.target.value);
+                }, 500);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const movies = await fetchMovies();
+            displayMovies(movies);
+            setupSearch();
+        });
+
+        document.addEventListener('click', (e) => {
+            const detailsPanel = document.getElementById('movieDetails');
+            if (e.target === detailsPanel) {
+                closeMovieDetails();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeMovieDetails();
+            }
+        });
+    </script>
+</body>
+</html>
